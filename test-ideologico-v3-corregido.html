@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¿Cuál es Tu Ideología? | Test Político Interactivo</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        :root {
+            --sky-blue: #8ecae6;
+            --blue-green: #219ebc;
+            --deep-blue: #023047;
+            --amber: #ffb703;
+            --orange: #fb8500;
+        }
+
+        * {
+            font-family: 'Inter', 'Outfit', sans-serif;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f4ff 50%, #f5f0ff 100%);
+            min-height: 100vh;
+        }
+
+        .btn-animated {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-animated:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(33, 158, 188, 0.3);
+        }
+
+        .btn-animated:active {
+            transform: translateY(-1px);
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .pulse-ring {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #219ebc 0%, #fb8500 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .card-float {
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 2px solid transparent;
+        }
+
+        .card-float:hover {
+            transform: translateY(-8px);
+            border-color: var(--blue-green);
+            box-shadow: 0 20px 40px rgba(33, 158, 188, 0.15);
+        }
+
+        .likert-option {
+            transition: all 0.25s ease;
+            cursor: pointer;
+            border: 2px solid #e0e7ff;
+        }
+
+        .likert-option:hover {
+            border-color: var(--blue-green);
+            background-color: #f0f9ff;
+        }
+
+        .likert-option.selected {
+            background: linear-gradient(135deg, var(--sky-blue) 0%, var(--blue-green) 100%);
+            color: white;
+            border-color: var(--blue-green);
+            box-shadow: 0 8px 20px rgba(33, 158, 188, 0.3);
+        }
+
+        .progress-bar {
+            transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            background: linear-gradient(90deg, var(--blue-green) 0%, var(--orange) 100%);
+        }
+
+        .diamond-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            aspect-ratio: 1;
+            max-height: 500px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, rgba(142, 202, 230, 0.1) 0%, rgba(33, 158, 188, 0.1) 100%);
+            border: 2px solid var(--sky-blue);
+            border-radius: 12px;
+        }
+
+        .badge-ideology {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            background: linear-gradient(135deg, var(--blue-green) 0%, var(--deep-blue) 100%);
+            color: white;
+            margin: 4px;
+        }
+
+        .flame-gradient {
+            background: linear-gradient(135deg, var(--amber) 0%, var(--orange) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .shimmer {
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useRef } = React;
+
+        const PoliticalTest = () => {
+            const [currentQuestion, setCurrentQuestion] = useState(0);
+            const [responses, setResponses] = useState({});
+            const [showResults, setShowResults] = useState(false);
+            const [selectedValue, setSelectedValue] = useState(null);
+
+            const questions = [
+                // Dimensión 1: Autoritarismo-Libertarianismo
+                { id: 1, text: "El gobierno debe tener poder fuerte para mantener el orden y la seguridad.", dim: "auth", reverse: false },
+                { id: 2, text: "Las reglas del gobierno a menudo nos quitan demasiada libertad personal.", dim: "auth", reverse: true },
+                { id: 3, text: "Deberíamos respetar siempre la autoridad, incluso si no estamos de acuerdo.", dim: "auth", reverse: false },
+                { id: 4, text: "Las personas deben poder tomar decisiones sobre sus vidas sin que el estado interfiera.", dim: "auth", reverse: true },
+                { id: 5, text: "La disciplina y el orden son los pilares de una sociedad funcional.", dim: "auth", reverse: false },
+                
+                // Dimensión 2: Socialismo-Capitalismo
+                { id: 6, text: "El estado debe controlar los sectores más importantes de la economía.", dim: "econ", reverse: false },
+                { id: 7, text: "El mercado libre es la mejor forma de crear riqueza y oportunidades.", dim: "econ", reverse: true },
+                { id: 8, text: "Los ricos deberían pagar muchos más impuestos para ayudar a los pobres.", dim: "econ", reverse: false },
+                { id: 9, text: "Las empresas privadas son más eficientes que los servicios públicos.", dim: "econ", reverse: true },
+                { id: 10, text: "La riqueza extrema es injusta y debe ser distribuida mejor.", dim: "econ", reverse: false },
+                
+                // Dimensión 3: Tradicionalismo-Progresismo
+                { id: 11, text: "Debemos mantener los valores y costumbres que siempre han funcionado.", dim: "prog", reverse: false },
+                { id: 12, text: "La sociedad debe avanzar rápido hacia nuevos derechos para todos.", dim: "prog", reverse: true },
+                { id: 13, text: "La familia tradicional es lo más importante para la estabilidad social.", dim: "prog", reverse: false },
+                { id: 14, text: "Los cambios sociales en derechos civiles han mejorado nuestras sociedades.", dim: "prog", reverse: true },
+                { id: 15, text: "La religión debe tener un papel importante en cómo se gobierna el país.", dim: "prog", reverse: false },
+                
+                // Dimensión 4: Nacionalismo-Internacionalismo
+                { id: 16, text: "Mi país debe priorizar sus intereses antes que compromisos internacionales.", dim: "nat", reverse: false },
+                { id: 17, text: "La integración global y comercial beneficia a la mayoría de países.", dim: "nat", reverse: true },
+                { id: 18, text: "La independencia nacional y la soberanía son fundamentales.", dim: "nat", reverse: false },
+                { id: 19, text: "Los organismos internacionales son útiles para resolver problemas globales.", dim: "nat", reverse: true },
+                { id: 20, text: "La inmigración debe ser restringida para proteger la cultura nacional.", dim: "nat", reverse: false },
+            ];
+
+            const calculateScores = () => {
+                const dims = {
+                    auth: [0, 2, 4, 1, 3],
+                    econ: [5, 6, 7, 8, 9],
+                    prog: [10, 11, 12, 13, 14],
+                    nat: [15, 16, 17, 18, 19]
+                };
+
+                const getScore = (dim) => {
+                    const indices = dims[dim];
+                    let positiveSum = 0, negativeSum = 0;
+                    
+                    indices.forEach((idx, i) => {
+                        const response = responses[questions[idx].id] || 3;
+                        const normalized = questions[idx].reverse ? (6 - response) : response;
+                        if (i < 3) positiveSum += normalized;
+                        else negativeSum += normalized;
+                    });
+                    
+                    const raw = (positiveSum - negativeSum);
+                    return Math.max(-10, Math.min(10, raw * 0.5));
+                };
+
+                return {
+                    auth: getScore('auth'),
+                    econ: getScore('econ'),
+                    prog: getScore('prog'),
+                    nat: getScore('nat')
+                };
+            };
+
+            const getIdeologyCategory = (auth, econ, prog, nat) => {
+                return {
+                    economic: econ < -2 ? "Izquierda" : econ > 2 ? "Derecha" : "Centro",
+                    libertarian: auth < -2 ? "Libertaria" : auth > 2 ? "Autoritaria" : "Centrista",
+                    progressive: prog < -2 ? "Tradicionalista" : prog > 2 ? "Progresista" : "Moderada",
+                    national: nat < -2 ? "Internacionalista" : nat > 2 ? "Nacionalista" : "Flexible"
+                };
+            };
+
+            const generateReport = (auth, econ, prog, nat) => {
+                const { economic, libertarian, progressive, national } = getIdeologyCategory(auth, econ, prog, nat);
+                
+                const reportMap = {
+                    "Izquierda-Libertaria-Progresista-Internacionalista": 
+                        "🌍 **Rebelde Global** • Crees que el capitalismo es injusto y el gobierno no debería controlar nuestras vidas. Apoyas mucho los derechos de minorías, la integración global y quieres un cambio social acelerado.",
+                    
+                    "Izquierda-Libertaria-Progresista-Nacionalista": 
+                        "🚩 **Izquierdista Comunitario** • Quieres justicia económica y libertad personal, pero también valoras tu identidad nacional. Mezclas valores progresistas con cierta protección local.",
+                    
+                    "Izquierda-Autoritaria-Progresista-Internacionalista":
+                        "🏴 **Socialista Progresista** • Crees que un estado fuerte puede lograr justicia social. Apoyas el cambio social rápido e integración global para beneficiar a todos.",
+                    
+                    "Derecha-Libertaria-Progresista-Internacionalista":
+                        "🚀 **Liberal Cosmopolita** • Confías en el libre mercado para crear oportunidades, pero apoyas derechos civiles modernos e integración global. Típico de emprendedores progresistas.",
+                    
+                    "Derecha-Libertaria-Tradicionalista-Nacionalista":
+                        "🎯 **Capitalista Conservador** • Confías en el mercado libre, valoras la tradición y defiendes los intereses nacionales. Quieres que el gobierno se meta menos en la economía.",
+                    
+                    "Derecha-Autoritaria-Tradicionalista-Nacionalista":
+                        "🛡️ **Conservador Nacionalista** • Crees que el orden y la tradición son importantes, confías en el mercado y defiendes fuertemente tu país. Visión clásica del conservadurismo.",
+                    
+                    "Centro-Centrista-Moderada-Flexible":
+                        "⚖️ **Centrista Equilibrado** • No estás seguro en las extremos. Crees en equilibrio: un poco de mercado, un poco de estado; cambio gradual; nacionalismo flexible.",
+                };
+
+                const keys = [
+                    `${economic}-${libertarian}-${progressive}-${national}`,
+                    `${economic}-${libertarian}`,
+                    `${progressive}-${national}`,
+                ];
+
+                for (const key of keys) {
+                    if (reportMap[key]) return reportMap[key];
+                }
+                
+                return "Tu posición ideológica es única. ¿Quizás una combinación que aún no tiene nombre? 🤔";
+            };
+
+            const handleResponse = (value) => {
+                const newResponses = { ...responses, [questions[currentQuestion].id]: value };
+                setResponses(newResponses);
+                setSelectedValue(null);
+
+                setTimeout(() => {
+                    if (currentQuestion < questions.length - 1) {
+                        setCurrentQuestion(currentQuestion + 1);
+                    } else {
+                        setShowResults(true);
+                    }
+                }, 300);
+            };
+
+            const resetTest = () => {
+                setCurrentQuestion(0);
+                setResponses({});
+                setShowResults(false);
+                setSelectedValue(null);
+            };
+
+            if (!showResults) {
+                const progress = ((currentQuestion) / questions.length) * 100;
+                const q = questions[currentQuestion];
+
+                return (
+                    <div className="min-h-screen p-4 md:p-6 flex items-center justify-center">
+                        <div className="w-full max-w-2xl fade-in">
+                            {/* Header */}
+                            <div className="mb-8 text-center">
+                                <h1 className="text-5xl md:text-6xl font-black mb-2">
+                                    <span className="gradient-text">¿Cuál es tu ideología?</span>
+                                </h1>
+                                <p className="text-gray-600 text-lg font-light">Descubre dónde te posicionas en el espectro político</p>
+                            </div>
+
+                            {/* Progress */}
+                            <div className="mb-8">
+                                <div className="flex justify-between items-center mb-3">
+                                    <span className="text-sm font-600 text-gray-700">
+                                        Pregunta {currentQuestion + 1}/{questions.length}
+                                    </span>
+                                    <span className="text-sm font-bold text-blue-green" style={{color: 'var(--blue-green)'}}>
+                                        {Math.round(progress)}%
+                                    </span>
+                                </div>
+                                <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                                    <div 
+                                        className="h-full progress-bar rounded-full"
+                                        style={{ width: `${progress}%` }}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Question Card */}
+                            <div className="bg-white rounded-2xl p-8 md:p-10 mb-8 shadow-lg card-float border-2 border-gray-100">
+                                <h2 className="text-2xl md:text-3xl font-bold mb-10 text-gray-800 leading-relaxed">
+                                    {q.text}
+                                </h2>
+
+                                {/* Likert Scale */}
+                                <div className="space-y-3">
+                                    {[
+                                        { val: 1, label: 'Totalmente en desacuerdo', emoji: '🚫' },
+                                        { val: 2, label: 'En desacuerdo', emoji: '👎' },
+                                        { val: 3, label: 'Neutral / Sin opinión', emoji: '🤷' },
+                                        { val: 4, label: 'De acuerdo', emoji: '👍' },
+                                        { val: 5, label: 'Totalmente de acuerdo', emoji: '✅' }
+                                    ].map(({ val, label, emoji }) => (
+                                        <button
+                                            key={val}
+                                            onClick={() => {
+                                                setSelectedValue(val);
+                                                handleResponse(val);
+                                            }}
+                                            className={`likert-option w-full p-4 text-left rounded-xl transition-all duration-200 font-medium text-base flex items-center justify-between group ${
+                                                responses[q.id] === val ? 'selected' : ''
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-2xl">{emoji}</span>
+                                                <span>{label}</span>
+                                            </div>
+                                            <span className={`text-sm font-bold px-3 py-1 rounded-lg ${
+                                                responses[q.id] === val 
+                                                    ? 'bg-white/30 text-white' 
+                                                    : 'bg-gray-100 text-gray-600 group-hover:bg-blue-100'
+                                            }`}>
+                                                {val}/5
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Navigation */}
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
+                                    disabled={currentQuestion === 0}
+                                    className="flex-1 py-4 px-4 bg-gray-200 hover:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed text-gray-700 font-bold rounded-xl transition-all btn-animated text-lg"
+                                >
+                                    ← Anterior
+                                </button>
+                                <button
+                                    onClick={() => currentQuestion < questions.length - 1 ? setCurrentQuestion(currentQuestion + 1) : setShowResults(true)}
+                                    disabled={!(q.id in responses)}
+                                    className="flex-1 py-4 px-4 bg-gradient-to-r from-blue-green to-orange disabled:opacity-30 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all btn-animated text-lg"
+                                    style={{background: 'linear-gradient(135deg, var(--blue-green) 0%, var(--orange) 100%)'}}
+                                >
+                                    {currentQuestion === questions.length - 1 ? 'Ver Mis Resultados' : 'Siguiente'} →
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            const scores = calculateScores();
+            const { economic, libertarian, progressive, national } = getIdeologyCategory(scores.auth, scores.econ, scores.prog, scores.nat);
+            const report = generateReport(scores.auth, scores.econ, scores.prog, scores.nat);
+
+            return (
+                <div className="min-h-screen p-4 md:p-6">
+                    <div className="max-w-7xl mx-auto">
+                        {/* Header */}
+                        <div className="mb-12 text-center fade-in">
+                            <h1 className="text-5xl md:text-6xl font-black mb-3">
+                                <span className="gradient-text">¡Listo!</span>
+                            </h1>
+                            <p className="text-gray-600 text-xl">Aquí está tu posicionamiento ideológico completo</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+                            {/* Diamante CORREGIDO */}
+                            <div className="bg-white rounded-2xl p-8 shadow-lg card-float border-2 border-gray-100 fade-in flex flex-col">
+                                <h2 className="text-2xl font-bold mb-6 text-gray-800">Tu Posición Política</h2>
+                                
+                                {/* Contenedor del diamante con padding controlado */}
+                                <div className="diamond-container flex-1">
+                                    <svg 
+                                        viewBox="0 0 400 500" 
+                                        className="w-full h-full"
+                                        preserveAspectRatio="xMidYMid meet"
+                                        style={{maxHeight: '450px'}}
+                                    >
+                                        {/* Fondo del diamante */}
+                                        <rect width="400" height="500" fill="#f9fafb" />
+
+                                        {/* Grid lines - sutiles */}
+                                        <g stroke="#e5e7eb" strokeWidth="1" opacity="0.5" strokeDasharray="4,4">
+                                            <line x1="200" y1="50" x2="200" y2="350" />
+                                            <line x1="50" y1="200" x2="350" y2="200" />
+                                        </g>
+
+                                        {/* DIAMANTE - forma principal */}
+                                        <polygon 
+                                            points="200,50 350,200 200,350 50,200" 
+                                            fill="rgba(142, 202, 230, 0.08)" 
+                                            stroke="#219ebc" 
+                                            strokeWidth="3.5"
+                                        />
+
+                                        {/* Punto de posición - GRANDE Y VISIBLE */}
+                                        <circle 
+                                            cx={200 + (scores.econ * 15)} 
+                                            cy={200 + (scores.auth * 15)} 
+                                            r="10" 
+                                            fill="#ffb703"
+                                            stroke="white"
+                                            strokeWidth="3"
+                                            className="pulse-ring"
+                                        />
+                                        
+                                        {/* Halo alrededor del punto */}
+                                        <circle 
+                                            cx={200 + (scores.econ * 15)} 
+                                            cy={200 + (scores.auth * 15)} 
+                                            r="25" 
+                                            fill="none"
+                                            stroke="#219ebc"
+                                            strokeWidth="2"
+                                            opacity="0.3"
+                                        />
+
+                                        {/* LEYENDA INTERIOR - DERECHA (Superior derecha) */}
+                                        <g>
+                                            <rect x="280" y="80" width="100" height="35" fill="white" stroke="#fb8500" strokeWidth="2" rx="6" />
+                                            <text x="330" y="96" textAnchor="middle" className="text-sm font-bold" fill="#fb8500" style={{fontSize: '14px', fontWeight: 'bold'}}>DERECHA</text>
+                                            <text x="330" y="109" textAnchor="middle" className="text-xs" fill="#9ca3af" style={{fontSize: '11px'}}>Capitalista</text>
+                                        </g>
+
+                                        {/* LEYENDA INTERIOR - IZQUIERDA (Superior izquierda) */}
+                                        <g>
+                                            <rect x="20" y="80" width="100" height="35" fill="white" stroke="#219ebc" strokeWidth="2" rx="6" />
+                                            <text x="70" y="96" textAnchor="middle" className="text-sm font-bold" fill="#219ebc" style={{fontSize: '14px', fontWeight: 'bold'}}>IZQUIERDA</text>
+                                            <text x="70" y="109" textAnchor="middle" className="text-xs" fill="#9ca3af" style={{fontSize: '11px'}}>Socialista</text>
+                                        </g>
+
+                                        {/* LEYENDA INTERIOR - LIBERTARIO (Arriba) */}
+                                        <g>
+                                            <rect x="150" y="15" width="100" height="35" fill="white" stroke="#8ecae6" strokeWidth="2" rx="6" />
+                                            <text x="200" y="31" textAnchor="middle" className="text-sm font-bold" fill="#8ecae6" style={{fontSize: '14px', fontWeight: 'bold'}}>LIBERTARIO</text>
+                                            <text x="200" y="44" textAnchor="middle" className="text-xs" fill="#9ca3af" style={{fontSize: '11px'}}>Libre</text>
+                                        </g>
+
+                                        {/* LEYENDA INTERIOR - AUTORITARIO (Abajo) */}
+                                        <g>
+                                            <rect x="150" y="410" width="100" height="35" fill="white" stroke="#fb8500" strokeWidth="2" rx="6" />
+                                            <text x="200" y="426" textAnchor="middle" className="text-sm font-bold" fill="#fb8500" style={{fontSize: '14px', fontWeight: 'bold'}}>AUTORITARIO</text>
+                                            <text x="200" y="439" textAnchor="middle" className="text-xs" fill="#9ca3af" style={{fontSize: '11px'}}>Orden</text>
+                                        </g>
+
+                                        {/* Etiquetas secundarias pequeñas en las esquinas */}
+                                        <text x="200" y="380" textAnchor="middle" className="text-xs" fill="#d1d5db" style={{fontSize: '10px'}}>
+                                            Progresista / Nacional
+                                        </text>
+                                        <text x="200" y="30" textAnchor="middle" className="text-xs" fill="#d1d5db" style={{fontSize: '10px'}}>
+                                            Tradicional / Inter.
+                                        </text>
+                                    </svg>
+                                </div>
+
+                                {/* Stats bajo diamante */}
+                                <div className="mt-8 grid grid-cols-2 gap-3">
+                                    <div className="stat-box p-3 rounded-lg">
+                                        <p className="text-xs uppercase font-bold text-gray-600 mb-1">Económico</p>
+                                        <p className="text-lg font-black" style={{color: scores.econ > 0 ? 'var(--orange)' : 'var(--blue-green)'}}>
+                                            {scores.econ > 0 ? 'Derecha' : 'Izquierda'}
+                                        </p>
+                                        <p className="text-xl font-black text-gray-800">{scores.econ.toFixed(1)}</p>
+                                    </div>
+                                    <div className="stat-box p-3 rounded-lg">
+                                        <p className="text-xs uppercase font-bold text-gray-600 mb-1">Libertario</p>
+                                        <p className="text-lg font-black" style={{color: scores.auth > 0 ? 'var(--orange)' : 'var(--blue-green)'}}>
+                                            {scores.auth > 0 ? 'Autoritario' : 'Libertario'}
+                                        </p>
+                                        <p className="text-xl font-black text-gray-800">{scores.auth.toFixed(1)}</p>
+                                    </div>
+                                    <div className="stat-box p-3 rounded-lg">
+                                        <p className="text-xs uppercase font-bold text-gray-600 mb-1">Social</p>
+                                        <p className="text-lg font-black" style={{color: scores.prog > 0 ? 'var(--orange)' : 'var(--blue-green)'}}>
+                                            {scores.prog > 0 ? 'Progresista' : 'Tradicionalista'}
+                                        </p>
+                                        <p className="text-xl font-black text-gray-800">{scores.prog.toFixed(1)}</p>
+                                    </div>
+                                    <div className="stat-box p-3 rounded-lg">
+                                        <p className="text-xs uppercase font-bold text-gray-600 mb-1">Nacional</p>
+                                        <p className="text-lg font-black" style={{color: scores.nat > 0 ? 'var(--orange)' : 'var(--blue-green)'}}>
+                                            {scores.nat > 0 ? 'Nacionalista' : 'Internacional'}
+                                        </p>
+                                        <p className="text-xl font-black text-gray-800">{scores.nat.toFixed(1)}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Profile Card */}
+                            <div className="space-y-6 fade-in">
+                                {/* Categorización */}
+                                <div className="bg-white rounded-2xl p-8 shadow-lg card-float border-2 border-gray-100">
+                                    <h2 className="text-2xl font-bold mb-6 text-gray-800">Tu Perfil</h2>
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-sky-blue/10 to-blue-green/10 rounded-xl border-2 border-sky-blue" style={{borderColor: 'var(--sky-blue)'}}>
+                                            <span className="font-bold text-gray-700">Eje Económico</span>
+                                            <span className="badge-ideology">{economic}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-sky-blue/10 to-blue-green/10 rounded-xl border-2 border-sky-blue" style={{borderColor: 'var(--blue-green)'}}>
+                                            <span className="font-bold text-gray-700">Eje Libertario</span>
+                                            <span className="badge-ideology">{libertarian}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-amber/10 to-orange/10 rounded-xl border-2 border-amber" style={{borderColor: 'var(--amber)'}}>
+                                            <span className="font-bold text-gray-700">Eje Social</span>
+                                            <span className="badge-ideology" style={{background: 'linear-gradient(135deg, var(--amber) 0%, var(--orange) 100%)'}}>{progressive}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-amber/10 to-orange/10 rounded-xl border-2 border-amber" style={{borderColor: 'var(--orange)'}}>
+                                            <span className="font-bold text-gray-700">Eje Nacional</span>
+                                            <span className="badge-ideology" style={{background: 'linear-gradient(135deg, var(--amber) 0%, var(--orange) 100%)'}}>{national}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Ideología Report */}
+                                <div className="bg-white rounded-2xl p-8 shadow-lg card-float border-2 border-gray-100">
+                                    <h2 className="text-2xl font-bold mb-4 text-gray-800">Tu Ideología</h2>
+                                    <p className="text-lg leading-relaxed text-gray-700 font-medium">
+                                        {report.split('•')[0]}<strong>{report.split('•')[1] || ''}</strong>
+                                        {report.includes('•') && report.split('•')[2] && `• ${report.split('•')[2]}`}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Detailed Analysis */}
+                        <div className="bg-white rounded-2xl p-8 shadow-lg card-float border-2 border-gray-100 mb-12 fade-in">
+                            <h2 className="text-3xl font-bold mb-8 text-gray-800">Lo Que Significa</h2>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div>
+                                    <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
+                                        <span className="text-2xl">⚖️</span>
+                                        Libertario-Autoritario
+                                    </h3>
+                                    <p className="text-gray-700 leading-relaxed">
+                                        {scores.auth < -5 ? '🔥 LIBERTARIO: Quieres máxima libertad personal. Desconfías del poder estatal y piensas que las personas deberían poder tomar sus propias decisiones sin interferencias.' :
+                                         scores.auth < 0 ? '🎯 INCLINACIÓN LIBERTARIA: Valoras la libertad personal, pero entiendes que algunas reglas son necesarias.' :
+                                         scores.auth < 5 ? '🛡️ INCLINACIÓN AUTORITARIA: Crees que el orden y la seguridad son importantes. Aceptas más regulación si es para el bien común.' :
+                                         '⚔️ AUTORITARIO: Priorizas el orden y la estabilidad. Confías en instituciones fuertes y autoridades establecidas.'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
+                                        <span className="text-2xl">💰</span>
+                                        Izquierda-Derecha
+                                    </h3>
+                                    <p className="text-gray-700 leading-relaxed">
+                                        {scores.econ < -5 ? '🚩 IZQUIERDA RADICAL: Crees que el capitalismo es injusto. Apoyas que el estado controle la economía para distribuir la riqueza equitativamente.' :
+                                         scores.econ < 0 ? '📊 IZQUIERDA: Prefieres regulación estatal y redistribución de riqueza. Crees en una economía más equitativa.' :
+                                         scores.econ < 5 ? '📈 DERECHA: Confías en el mercado libre. Piensas que la iniciativa privada crea oportunidades mejor que el estado.' :
+                                         '🚀 DERECHA RADICAL: Quieres máximo mercado libre. Confías en que la competencia crea prosperidad sin intervención estatal.'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
+                                        <span className="text-2xl">🔄</span>
+                                        Tradicional-Progresista
+                                    </h3>
+                                    <p className="text-gray-700 leading-relaxed">
+                                        {scores.prog < -5 ? '🏛️ TRADICIONALISTA: Valoras las costumbres establecidas, la familia tradicional y la religión. Preferís cambios graduales, no revolucionarios.' :
+                                         scores.prog < 0 ? '⏱️ CONSERVADOR: Respetas la tradición pero aceptas algo de cambio progresista. Prudente con transformaciones sociales rápidas.' :
+                                         scores.prog < 5 ? '⚡ PROGRESISTA: Apoyas cambios sociales para mayor inclusión. Crees en derechos de minorías y modernización de valores.' :
+                                         '🌈 PROGRESISTA RADICAL: Quieres cambio social acelerado. Apoyas transformaciones amplias en derechos, moral y costumbres.'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
+                                        <span className="text-2xl">🌍</span>
+                                        Nacional-Internacional
+                                    </h3>
+                                    <p className="text-gray-700 leading-relaxed">
+                                        {scores.nat < -5 ? '🌏 COSMOPOLITA: Crees en un mundo sin fronteras. Apoyas integración global, comercio internacional y organismos mundiales.' :
+                                         scores.nat < 0 ? '🤝 INTERNACIONALISTA: Valoras cooperación global. Piensas que los problemas se resuelven mejor juntos.' :
+                                         scores.nat < 5 ? '🚩 NACIONALISTA: Priorizas tu país. Piensas que la soberanía y la identidad nacional son importantes.' :
+                                         '🛡️ NACIONALISTA RADICAL: Defiendes fuertemente tu país. Prefieres autonomía nacional antes que integración global.'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* CTA */}
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center fade-in">
+                            <button
+                                onClick={resetTest}
+                                className="px-8 py-4 bg-white border-2 border-blue-green text-blue-green font-bold rounded-xl transition-all btn-animated text-lg hover:bg-blue-green hover:text-white"
+                                style={{borderColor: 'var(--blue-green)', color: 'var(--blue-green)'}}
+                                onMouseEnter={(e) => {e.target.style.backgroundColor = 'var(--blue-green)'; e.target.style.color = 'white'}}
+                                onMouseLeave={(e) => {e.target.style.backgroundColor = 'white'; e.target.style.color = 'var(--blue-green)'}}
+                            >
+                                ↻ Repetir Test
+                            </button>
+                            <a
+                                href="#"
+                                onClick={(e) => {e.preventDefault(); alert('Funcionalidad de compartir próximamente')}}
+                                className="px-8 py-4 bg-gradient-to-r from-blue-green to-orange text-white font-bold rounded-xl transition-all btn-animated text-lg"
+                                style={{background: 'linear-gradient(135deg, var(--blue-green) 0%, var(--orange) 100%)'}}
+                            >
+                                📱 Compartir Resultado
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<PoliticalTest />, document.getElementById('root'));
+    </script>
+</body>
+</html>
